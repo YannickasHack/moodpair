@@ -1,37 +1,38 @@
 /* ==========================================================
    MoodPair — Logique de l'application
-   Base de données simulée via localStorage
+   Flux : Créer compte → OTP → Chercher partenaire → App
    ========================================================== */
 
-/* ---------- Constantes ---------- */
+/* ---------- Humeurs ---------- */
 const HUMOURS = [
-  { id: 'heureux',   emoji: '😄', label: 'Heureux',   color: '#facc15' },
-  { id: 'amoureux',  emoji: '😍', label: 'Amoureux',  color: '#f472b6' },
-  { id: 'serein',    emoji: '😌', label: 'Serein',    color: '#86efac' },
-  { id: 'neutre',    emoji: '😐', label: 'Neutre',    color: '#cbd5e1' },
-  { id: 'triste',    emoji: '😔', label: 'Triste',    color: '#93c5fd' },
-  { id: 'frustre',   emoji: '😤', label: 'Frustré',   color: '#fdba74' },
-  { id: 'en_colere', emoji: '😡', label: 'En colère', color: '#fca5a5' },
-  { id: 'stresse',   emoji: '😰', label: 'Stressé',   color: '#c4b5fd' },
-  { id: 'fatigue',   emoji: '😴', label: 'Fatigué',   color: '#a5b4fc' },
-  { id: 'malade',    emoji: '🤒', label: 'Malade',    color: '#d6b48b' },
-  { id: 'euphorique',emoji: '🥳', label: 'Euphorique',color: '#f0abfc' },
-  { id: 'pensif',    emoji: '🤔', label: 'Pensif',    color: '#5eead4' },
+  { id: 'heureux',   emoji: '😄', label: 'Heureux' },
+  { id: 'amoureux',  emoji: '😍', label: 'Amoureux' },
+  { id: 'serein',    emoji: '😌', label: 'Serein' },
+  { id: 'neutre',    emoji: '😐', label: 'Neutre' },
+  { id: 'triste',    emoji: '😔', label: 'Triste' },
+  { id: 'frustre',   emoji: '😤', label: 'Frustré' },
+  { id: 'en_colere', emoji: '😡', label: 'En colère' },
+  { id: 'stresse',   emoji: '😰', label: 'Stressé' },
+  { id: 'fatigue',   emoji: '😴', label: 'Fatigué' },
+  { id: 'malade',    emoji: '🤒', label: 'Malade' },
+  { id: 'euphorique',emoji: '🥳', label: 'Euphorique' },
+  { id: 'pensif',    emoji: '🤔', label: 'Pensif' },
 ];
 
-const STORAGE_KEY = 'moodpair_db';
+const STORAGE_KEY = 'moodpair_db_v2';
 
-/* ---------- Base de données localStorage ---------- */
+/* ---------- Base locale ---------- */
 function loadDB() {
   const raw = localStorage.getItem(STORAGE_KEY);
-  return raw ? JSON.parse(raw) : { users: [], couples: [], moods: [], session: null };
+  return raw ? JSON.parse(raw) : { users: [], moods: [], session: null };
 }
 
-function saveDB(db) {
+function saveDB() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
 }
 
 let db = loadDB();
+let selectedMoodId = null;
 
 /* ---------- Utilitaires ---------- */
 function todayKey() {
@@ -43,7 +44,7 @@ function formatPhone(v) {
 }
 
 function initials(name) {
-  return name.trim().split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  return name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 }
 
 function getCurrentUser() {
@@ -65,7 +66,7 @@ function showToast(msg) {
   showToast._t = setTimeout(() => toast.classList.remove('show'), 2600);
 }
 
-/* ---------- Navigation écrans ---------- */
+/* ---------- Écrans ---------- */
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -74,8 +75,8 @@ function showScreen(id) {
 /* ---------- Confettis ---------- */
 function launchConfetti() {
   const container = document.getElementById('confetti-container');
-  const colors = ['#ec4899', '#8b5cf6', '#facc15', '#10b981', '#38bdf8', '#f472b6'];
-  for (let i = 0; i < 60; i++) {
+  const colors = ['#e11d48', '#f43f5e', '#ffffff', '#9f1239', '#fecdd3'];
+  for (let i = 0; i < 70; i++) {
     const c = document.createElement('div');
     c.className = 'confetti';
     c.style.left = Math.random() * 100 + 'vw';
@@ -89,7 +90,7 @@ function launchConfetti() {
 }
 
 /* ==========================================================
-   AUTHENTIFICATION
+   ÉTAPE 1 — CRÉATION DU COMPTE
    ========================================================== */
 document.getElementById('form-auth').addEventListener('submit', (e) => {
   e.preventDefault();
@@ -101,17 +102,17 @@ document.getElementById('form-auth').addEventListener('submit', (e) => {
     return;
   }
 
+  // Compte existant → reconnexion directe
   const existing = db.users.find(u => u.phone === phone);
-
   if (existing) {
     db.session = phone;
-    saveDB(db);
+    saveDB();
     showToast(`Bon retour, ${existing.name} !`);
-    startApp();
+    routeAfterAuth(existing);
     return;
   }
 
-  // Nouveau compte → simulation OTP
+  // Nouveau compte → OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   window._pending = { name, phone, otp };
   document.getElementById('otp-hint').textContent = `(Simulation — ton code : ${otp})`;
@@ -119,7 +120,9 @@ document.getElementById('form-auth').addEventListener('submit', (e) => {
   showScreen('screen-otp');
 });
 
-/* ---------- OTP ---------- */
+/* ==========================================================
+   ÉTAPE 2 — VALIDATION OTP → CRÉATION EFFECTIVE DU COMPTE
+   ========================================================== */
 document.getElementById('form-otp').addEventListener('submit', (e) => {
   e.preventDefault();
   const code = document.getElementById('input-otp').value.trim();
@@ -139,15 +142,24 @@ document.getElementById('form-otp').addEventListener('submit', (e) => {
 
   db.users.push(newUser);
   db.session = newUser.phone;
-  saveDB(db);
+  saveDB();
   window._pending = null;
 
-  showToast(`Bienvenue, ${newUser.name} !`);
-  startApp();
+  showToast(`Compte créé, ${newUser.name} !`);
+  routeAfterAuth(newUser);
 });
 
+/* ---------- Routage après auth ---------- */
+function routeAfterAuth(user) {
+  if (!user.partnerPhone) {
+    showScreen('screen-pair');
+  } else {
+    startApp();
+  }
+}
+
 /* ==========================================================
-   ASSOCIATION COUPLE
+   ÉTAPE 3 — RECHERCHE DU PARTENAIRE
    ========================================================== */
 document.getElementById('form-pair').addEventListener('submit', (e) => {
   e.preventDefault();
@@ -178,33 +190,31 @@ document.getElementById('form-pair').addEventListener('submit', (e) => {
   // Liaison réciproque
   me.partnerPhone = phone;
   partner.partnerPhone = me.phone;
-
-  db.couples.push({ users: [me.phone, phone], createdAt: Date.now() });
-  saveDB(db);
+  saveDB();
 
   msg.textContent = '✅ Vous êtes maintenant connectés !';
   msg.className = 'form-message success';
 
   setTimeout(() => {
-    document.getElementById('pair-message').textContent = '';
+    msg.textContent = '';
+    document.getElementById('input-partner-phone').value = '';
     startApp();
-  }, 1200);
+    showToast('Couple connecté 💞');
+  }, 1100);
+});
+
+/* ---------- Passer cette étape ---------- */
+document.getElementById('btn-skip-pair').addEventListener('click', () => {
+  startApp();
+  showToast('Tu pourras ajouter ton partenaire plus tard');
 });
 
 /* ==========================================================
-   DÉMARRAGE APP
+   DÉMARRAGE DE L'APP
    ========================================================== */
 function startApp() {
   const me = getCurrentUser();
-  if (!me) {
-    showScreen('screen-auth');
-    return;
-  }
-
-  if (!me.partnerPhone) {
-    showScreen('screen-pair');
-    return;
-  }
+  if (!me) { showScreen('screen-auth'); return; }
 
   showScreen('screen-app');
   renderHeader(me);
@@ -213,14 +223,19 @@ function startApp() {
   renderHistory();
   renderProfile();
 
-  // Pré-sélectionne l'humeur du jour
+  // Restaure humeur du jour
   const today = todayKey();
   const myMood = db.moods.find(m => m.userPhone === me.phone && m.date === today);
   if (myMood) {
+    selectedMoodId = myMood.moodId;
     document.querySelectorAll('.mood-card').forEach(c => {
-      if (c.dataset.id === myMood.moodId) c.classList.add('selected');
+      c.classList.toggle('selected', c.dataset.id === myMood.moodId);
     });
     document.getElementById('input-note').value = myMood.note || '';
+  } else {
+    selectedMoodId = null;
+    document.getElementById('input-note').value = '';
+    document.querySelectorAll('.mood-card').forEach(c => c.classList.remove('selected'));
   }
 }
 
@@ -234,13 +249,14 @@ function renderHeader(me) {
    ========================================================== */
 function renderMoodGrid() {
   const grid = document.getElementById('mood-grid');
+  if (grid.dataset.rendered) return;
   grid.innerHTML = '';
 
   HUMOURS.forEach(h => {
     const card = document.createElement('button');
+    card.type = 'button';
     card.className = 'mood-card';
     card.dataset.id = h.id;
-    card.style.setProperty('--mood-color', h.color);
     card.innerHTML = `
       <span class="mood-emoji">${h.emoji}</span>
       <span class="mood-label">${h.label}</span>
@@ -248,16 +264,15 @@ function renderMoodGrid() {
     card.addEventListener('click', () => selectMood(h.id));
     grid.appendChild(card);
   });
+  grid.dataset.rendered = '1';
 }
-
-let selectedMoodId = null;
 
 function selectMood(id) {
   selectedMoodId = id;
   document.querySelectorAll('.mood-card').forEach(c => {
     c.classList.toggle('selected', c.dataset.id === id);
   });
-  if (navigator.vibrate) navigator.vibrate(15);
+  if (navigator.vibrate) navigator.vibrate(12);
 }
 
 document.getElementById('btn-share-mood').addEventListener('click', () => {
@@ -270,7 +285,6 @@ document.getElementById('btn-share-mood').addEventListener('click', () => {
   const today = todayKey();
   const note = document.getElementById('input-note').value.trim();
 
-  // Supprime l'ancienne humeur du jour si elle existe
   db.moods = db.moods.filter(m => !(m.userPhone === me.phone && m.date === today));
 
   db.moods.push({
@@ -281,12 +295,11 @@ document.getElementById('btn-share-mood').addEventListener('click', () => {
     createdAt: Date.now(),
   });
 
-  saveDB(db);
+  saveDB();
   showToast('Humeur partagée 💫');
   renderDashboard();
   renderHistory();
 
-  // Confettis si les deux ont partagé
   const partner = getPartner(me);
   if (partner) {
     const partnerMood = db.moods.find(m => m.userPhone === partner.phone && m.date === today);
@@ -295,7 +308,7 @@ document.getElementById('btn-share-mood').addEventListener('click', () => {
 });
 
 /* ==========================================================
-   TABLEAU DE BORD COUPLE
+   TABLEAU DE BORD
    ========================================================== */
 function renderDashboard() {
   const me = getCurrentUser();
@@ -327,10 +340,10 @@ function renderDashboard() {
   } else {
     document.getElementById('partner-emoji').textContent = '❔';
     document.getElementById('partner-mood').textContent = partner ? 'En attente…' : 'Aucun partenaire';
-    document.getElementById('partner-note').textContent = '';
+    document.getElementById('partner-note').textContent = partner ? '' : 'Ajoute ton partenaire dans Profil';
   }
 
-  // Bannière comparaison
+  // Comparaison
   const banner = document.getElementById('compare-text');
   if (myMood && partnerMood) {
     const hm = HUMOURS.find(x => x.id === myMood.moodId);
@@ -344,23 +357,25 @@ function renderDashboard() {
     banner.textContent = 'Partagez vos humeurs pour voir votre compatibilité du jour.';
   }
 
-  // Statistiques
   renderStats(me, partner);
 }
 
 function renderStats(me, partner) {
-  if (!partner) return;
+  if (!partner) {
+    document.getElementById('stat-days').textContent = '0';
+    document.getElementById('stat-top').textContent = '—';
+    document.getElementById('stat-match').textContent = '0%';
+    return;
+  }
 
   const myMoods = db.moods.filter(m => m.userPhone === me.phone);
   const partnerMoods = db.moods.filter(m => m.userPhone === partner.phone);
 
-  // Jours partagés = dates communes
   const myDates = new Set(myMoods.map(m => m.date));
   const sharedDays = partnerMoods.filter(m => myDates.has(m.date)).length;
 
   document.getElementById('stat-days').textContent = sharedDays;
 
-  // Humeur dominante
   const counts = {};
   myMoods.forEach(m => { counts[m.moodId] = (counts[m.moodId] || 0) + 1; });
   const topId = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
@@ -368,7 +383,6 @@ function renderStats(me, partner) {
     ? HUMOURS.find(h => h.id === topId).emoji
     : '—';
 
-  // Compatibilité
   let matches = 0;
   partnerMoods.forEach(pm => {
     const mm = myMoods.find(m => m.date === pm.date);
@@ -428,9 +442,22 @@ function renderHistory() {
 function renderProfile() {
   const me = getCurrentUser();
   if (!me) return;
+  const partner = getPartner(me);
+
   document.getElementById('profile-avatar').textContent = initials(me.name);
   document.getElementById('profile-name').textContent = me.name;
   document.getElementById('profile-phone').textContent = me.phone;
+
+  const status = document.getElementById('profile-status');
+  if (partner) {
+    status.textContent = `💞 Lié à ${partner.name}`;
+    status.style.background = 'rgba(225, 29, 72, 0.15)';
+    status.style.color = 'var(--red-bright)';
+  } else {
+    status.textContent = '🔓 Aucun partenaire lié';
+    status.style.background = 'rgba(255,255,255,0.06)';
+    status.style.color = 'var(--gray-2)';
+  }
 }
 
 /* ---------- Actions profil ---------- */
@@ -439,26 +466,40 @@ document.getElementById('btn-logout-2').addEventListener('click', logout);
 
 function logout() {
   db.session = null;
-  saveDB(db);
+  saveDB();
   document.getElementById('input-name').value = '';
   document.getElementById('input-phone').value = '';
+  document.getElementById('input-partner-phone').value = '';
   showScreen('screen-auth');
   showToast('Déconnecté 👋');
 }
 
 document.getElementById('btn-unlink').addEventListener('click', () => {
-  if (!confirm('Délier le couple ? Vous ne verrez plus les humeurs de votre partenaire.')) return;
   const me = getCurrentUser();
   const partner = getPartner(me);
-  if (partner) partner.partnerPhone = null;
+  if (!partner) {
+    showToast('Aucun partenaire à délier');
+    return;
+  }
+  if (!confirm(`Délier ton couple avec ${partner.name} ?`)) return;
+
+  partner.partnerPhone = null;
   me.partnerPhone = null;
-  saveDB(db);
+  saveDB();
   showToast('Couple délié');
-  startApp();
+  renderDashboard();
+  renderHistory();
+  renderProfile();
+});
+
+document.getElementById('btn-relink').addEventListener('click', () => {
+  showScreen('screen-pair');
+  document.getElementById('pair-message').textContent = '';
+  document.getElementById('input-partner-phone').value = '';
 });
 
 /* ==========================================================
-   NAVIGATION BASSE
+   NAVIGATION
    ========================================================== */
 document.querySelectorAll('.nav-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -468,7 +509,6 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-' + btn.dataset.view).classList.add('active');
 
-    // Rafraîchit les vues dynamiques
     if (btn.dataset.view === 'couple') renderDashboard();
     if (btn.dataset.view === 'history') renderHistory();
     if (btn.dataset.view === 'profile') renderProfile();
@@ -481,7 +521,7 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 (function init() {
   const me = getCurrentUser();
   if (me) {
-    startApp();
+    routeAfterAuth(me);
   } else {
     showScreen('screen-auth');
   }
