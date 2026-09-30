@@ -1,42 +1,38 @@
-# 💑 MoodPair
+# ❤️ MoodPair
 
-Application web permettant à deux partenaires de partager leur humeur du jour.
-100% front-end — aucune installation, aucun backend.
+Application web qui permet à deux partenaires de partager leur humeur du jour.
+Thème **rouge · noir · blanc**, design premium, 100 % front-end.
 
 ## 🚀 Tester en local
 
-1. Télécharge les 3 fichiers : `index.html`, `style.css`, `script.js`
+1. Télécharge les fichiers `index.html`, `style.css`, `script.js`
 2. Ouvre `index.html` dans ton navigateur
-3. Crée ton compte avec un numéro + code OTP affiché à l'écran
+3. Crée ton compte (prénom + numéro + code OTP affiché à l'écran)
+4. Cherche ton partenaire par son numéro
 
 ## 🌐 Déployer sur GitHub Pages
 
-1. Crée un repo public nommé `moodpair`
-2. Ajoute les 3 fichiers (`Add file → Upload files`)
-3. Va dans **Settings → Pages**
-4. Source : **Deploy from a branch** → `main` → `/ (root)` → **Save**
-5. Ton site est en ligne : `https://TON-PSEUDO.github.io/moodpair`
+1. Crée un repo public `moodpair`
+2. Ajoute les 3 fichiers
+3. **Settings → Pages** → Source : `main` / `/ (root)` → **Save**
+4. Ton site : `https://TON-PSEUDO.github.io/moodpair`
 
 ## 🧪 Tester à deux
 
-- Fenêtre **normale** → Utilisateur A (numéro A)
-- Fenêtre **navigation privée** → Utilisateur B (numéro B)
-- A cherche le numéro de B → ils sont liés
-- Chacun partage son humeur → les deux se voient
+- Navigateur normal → utilisateur A
+- Navigation privée → utilisateur B
+- Chacun crée son compte
+- A cherche B par son numéro → couple lié
+- Partagez vos humeurs 💫
 
-## 🎨 Fonctionnalités
+## ✨ Fonctionnalités
 
-- Inscription par numéro de téléphone + OTP simulé
+- Inscription par numéro + OTP simulé
 - Association par numéro de partenaire
 - 12 humeurs avec émojis en grand
-- Note optionnelle (140 caractères)
-- Tableau de bord de couple + compatibilité
+- Note optionnelle
+- Tableau de bord couple + compatibilité
 - Historique 7 jours
-- Réactions (❤️ 🤗 💪 ☕)
+- Réactions rapides
 - Confettis quand les humeurs matchent
-- Mode sombre automatique
-- Design glassmorphism responsive
-
-## 🛠️ Stack
-
-HTML · CSS · JavaScript vanilla · localStorage
+- Thème rouge / noir / blanc premium
