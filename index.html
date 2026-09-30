@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MoodPair — Partagez vos humeurs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💑</text></svg>" />
+</head>
+<body>
+
+  <!-- Décor animé en arrière-plan -->
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- ÉCRAN : AUTHENTIFICATION -->
+  <main id="screen-auth" class="screen active">
+    <div class="auth-card glass">
+      <div class="brand">
+        <div class="brand-logo">💑</div>
+        <h1 class="brand-name">MoodPair</h1>
+        <p class="brand-tag">Partagez vos humeurs, connectez vos cœurs</p>
+      </div>
+
+      <form id="form-auth" class="form">
+        <label class="field">
+          <span class="field-label">Prénom</span>
+          <input type="text" id="input-name" placeholder="Ton prénom" required minlength="2" />
+        </label>
+
+        <label class="field">
+          <span class="field-label">Numéro de téléphone</span>
+          <input type="tel" id="input-phone" placeholder="+243 812 345 678" required />
+        </label>
+
+        <button type="submit" class="btn btn-primary">
+          <span>Créer mon compte</span>
+          <span class="btn-arrow">→</span>
+        </button>
+
+        <p class="form-hint">Déjà inscrit ? Utilise le même numéro pour te reconnecter.</p>
+      </form>
+    </div>
+  </main>
+
+  <!-- ÉCRAN : OTP SIMULÉ -->
+  <main id="screen-otp" class="screen">
+    <div class="auth-card glass">
+      <div class="brand">
+        <div class="brand-logo">🔐</div>
+        <h1 class="brand-name">Vérification</h1>
+        <p class="brand-tag">Entre le code à 6 chiffres reçu par SMS</p>
+      </div>
+      <form id="form-otp" class="form">
+        <label class="field">
+          <span class="field-label">Code OTP</span>
+          <input type="text" id="input-otp" placeholder="123456" maxlength="6" inputmode="numeric" required />
+        </label>
+        <button type="submit" class="btn btn-primary">
+          <span>Valider</span>
+          <span class="btn-arrow">→</span>
+        </button>
+        <p class="form-hint" id="otp-hint"></p>
+      </form>
+    </div>
+  </main>
+
+  <!-- ÉCRAN : ASSOCIATION COUPLE -->
+  <main id="screen-pair" class="screen">
+    <div class="auth-card glass">
+      <div class="brand">
+        <div class="brand-logo">💞</div>
+        <h1 class="brand-name">Trouve ton partenaire</h1>
+        <p class="brand-tag">Entre son numéro de téléphone pour vous connecter</p>
+      </div>
+      <form id="form-pair" class="form">
+        <label class="field">
+          <span class="field-label">Numéro de ton/ta partenaire</span>
+          <input type="tel" id="input-partner-phone" placeholder="+243 812 345 678" required />
+        </label>
+        <button type="submit" class="btn btn-primary">
+          <span>Rechercher</span>
+          <span class="btn-arrow">→</span>
+        </button>
+        <p class="form-message" id="pair-message"></p>
+      </form>
+    </div>
+  </main>
+
+  <!-- ÉCRAN : APPLICATION PRINCIPALE -->
+  <main id="screen-app" class="screen">
+    <header class="app-header glass">
+      <div class="header-left">
+        <span class="header-avatar" id="header-avatar">?</span>
+        <div>
+          <p class="header-hello">Salut,</p>
+          <p class="header-name" id="header-name">—</p>
+        </div>
+      </div>
+      <button class="icon-btn" id="btn-logout" title="Se déconnecter">⏻</button>
+    </header>
+
+    <section class="app-content">
+
+      <!-- VUE : HUMEUR -->
+      <div id="view-mood" class="view active">
+        <h2 class="view-title">Comment te sens-tu aujourd'hui ?</h2>
+        <p class="view-sub">Choisis une humeur, ton/ta partenaire la verra.</p>
+
+        <div class="mood-grid" id="mood-grid"><!-- généré en JS --></div>
+
+        <div class="note-block glass">
+          <label class="field">
+            <span class="field-label">Une petite note ? (optionnel)</span>
+            <textarea id="input-note" maxlength="140" rows="2" placeholder="Aujourd'hui, je me sens..."></textarea>
+          </label>
+          <button class="btn btn-primary" id="btn-share-mood">
+            <span>Partager avec mon/ma partenaire</span>
+            <span class="btn-arrow">→</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- VUE : COUPLE -->
+      <div id="view-couple" class="view">
+        <h2 class="view-title">Votre journée à deux</h2>
+
+        <div class="couple-cards">
+          <div class="partner-card glass" id="card-me">
+            <p class="partner-label">Moi</p>
+            <div class="partner-emoji" id="me-emoji">❔</div>
+            <p class="partner-mood" id="me-mood">Aucune humeur partagée</p>
+            <p class="partner-note" id="me-note"></p>
+          </div>
+          <div class="partner-card glass" id="card-partner">
+            <p class="partner-label">Mon/ma partenaire</p>
+            <div class="partner-emoji" id="partner-emoji">❔</div>
+            <p class="partner-mood" id="partner-mood">En attente…</p>
+            <p class="partner-note" id="partner-note"></p>
+            <div class="reactions" id="reactions">
+              <button data-reaction="❤️" class="reaction-btn">❤️</button>
+              <button data-reaction="🤗" class="reaction-btn">🤗</button>
+              <button data-reaction="💪" class="reaction-btn">💪</button>
+              <button data-reaction="☕" class="reaction-btn">☕</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="compare-banner glass" id="compare-banner">
+          <span id="compare-text">Partagez vos humeurs pour voir votre compatibilité du jour.</span>
+        </div>
+
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card glass">
+            <p class="stat-value" id="stat-days">0</p>
+            <p class="stat-label">Jours partagés</p>
+          </div>
+          <div class="stat-card glass">
+            <p class="stat-value" id="stat-top">—</p>
+            <p class="stat-label">Humeur dominante</p>
+          </div>
+          <div class="stat-card glass">
+            <p class="stat-value" id="stat-match">0%</p>
+            <p class="stat-label">Compatibilité</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- VUE : HISTORIQUE -->
+      <div id="view-history" class="view">
+        <h2 class="view-title">Les 7 derniers jours</h2>
+        <div class="history-grid glass" id="history-grid"><!-- généré en JS --></div>
+      </div>
+
+      <!-- VUE : PROFIL -->
+      <div id="view-profile" class="view">
+        <h2 class="view-title">Mon profil</h2>
+        <div class="profile-card glass">
+          <div class="profile-avatar" id="profile-avatar">?</div>
+          <p class="profile-name" id="profile-name">—</p>
+          <p class="profile-phone" id="profile-phone">—</p>
+        </div>
+
+        <div class="profile-actions">
+          <button class="btn btn-ghost" id="btn-unlink">💔 Délier le couple</button>
+          <button class="btn btn-danger" id="btn-logout-2">⏻ Se déconnecter</button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Navigation basse -->
+    <nav class="bottom-nav glass">
+      <button class="nav-btn active" data-view="mood">
+        <span class="nav-icon">😊</span><span class="nav-label">Humeur</span>
+      </button>
+      <button class="nav-btn" data-view="couple">
+        <span class="nav-icon">💞</span><span class="nav-label">Couple</span>
+      </button>
+      <button class="nav-btn" data-view="history">
+        <span class="nav-icon">📅</span><span class="nav-label">Historique</span>
+      </button>
+      <button class="nav-btn" data-view="profile">
+        <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
+      </button>
+    </nav>
+  </main>
+
+  <!-- Confettis -->
+  <div id="confetti-container" aria-hidden="true"></div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
